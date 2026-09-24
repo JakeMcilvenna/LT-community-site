@@ -1,0 +1,659 @@
+@import "tailwindcss";
+
+:root {
+  --background: #080a0c;
+  --surface: #0f1215;
+  --surface-raised: #15191d;
+  --foreground: #f0ede6;
+  --muted: #9d9b95;
+  --line: rgba(240, 237, 230, 0.12);
+  --accent: #c6a66c;
+  --accent-strong: #dfc184;
+  --danger: #b7635f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+  color: var(--foreground);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background:
+    radial-gradient(circle at 14% 20%, rgba(107, 88, 56, 0.08), transparent 26rem),
+    radial-gradient(circle at 86% 70%, rgba(77, 92, 87, 0.06), transparent 30rem),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), sans-serif;
+  letter-spacing: -0.01em;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(198, 166, 108, 0.34);
+  color: var(--foreground);
+}
+
+a,
+button,
+input,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+a:focus-visible,
+button:focus-visible,
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 3px;
+}
+
+.section-shell {
+  width: min(calc(100% - 2rem), 82rem);
+  margin-inline: auto;
+}
+
+.display-font {
+  font-family: var(--font-display), serif;
+  font-weight: 400;
+  font-synthesis: none;
+}
+
+.brand-font {
+  font-family: var(--font-brand), serif;
+  font-weight: 500;
+  font-synthesis: none;
+}
+
+.numeric-font {
+  font-family: var(--font-body), sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 640px) {
+  .section-shell {
+    width: min(calc(100% - 3rem), 82rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .section-shell {
+    width: min(calc(100% - 4rem), 82rem);
+  }
+}
+
+.hero-embers {
+  position: absolute;
+  inset: 30% 0 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  mask-image: linear-gradient(to top, black 0%, black 72%, transparent 100%);
+}
+
+.hero-ember {
+  position: absolute;
+  width: var(--ember-size);
+  height: var(--ember-height);
+  border-radius: 999px;
+  background: #f1c174;
+  filter: blur(var(--ember-blur));
+  mix-blend-mode: screen;
+  opacity: 0;
+  box-shadow:
+    0 0 0.12rem rgba(255, 235, 185, 0.94),
+    0 0 var(--ember-glow-near) rgba(239, 176, 85, 0.88),
+    0 0 var(--ember-glow-far) rgba(206, 112, 46, 0.42);
+  animation: ember-rise var(--ember-duration) var(--ember-delay) linear infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes ember-rise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(-4deg) scale(0.55);
+  }
+
+  8% {
+    opacity: var(--ember-opacity);
+  }
+
+  22% {
+    transform: translate3d(var(--ember-x1), var(--ember-y1), 0) rotate(8deg) scale(1);
+  }
+
+  47% {
+    opacity: var(--ember-opacity);
+    transform: translate3d(var(--ember-x2), var(--ember-y2), 0) rotate(-11deg) scale(0.88);
+  }
+
+  72% {
+    opacity: 0.36;
+    transform: translate3d(var(--ember-x3), var(--ember-y3), 0) rotate(13deg) scale(0.7);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--ember-x4), var(--ember-rise), 0) rotate(-8deg) scale(0.28);
+  }
+}
+
+.surface {
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: rgba(15, 18, 21, 0.84);
+  box-shadow: inset 0 1px 0 rgba(240, 237, 230, 0.035);
+}
+
+.raid-calendar[data-color-scheme="dark"] {
+  --fc-classic-background: #0c0e0f;
+  --fc-classic-border: rgba(214, 202, 176, 0.14);
+  --fc-classic-button: #111416;
+  --fc-classic-button-border: rgba(240, 237, 230, 0.16);
+  --fc-classic-button-foreground: var(--foreground);
+  --fc-classic-button-outline: rgba(223, 193, 132, 0.38);
+  --fc-classic-button-strong: #332d24;
+  --fc-classic-button-strong-border: rgba(223, 193, 132, 0.58);
+  --fc-classic-event: rgba(198, 166, 108, 0.22);
+  --fc-classic-event-contrast: var(--foreground);
+  --fc-classic-faint: #111415;
+  --fc-classic-faint-foreground: #77756f;
+  --fc-classic-foreground: var(--foreground);
+  --fc-classic-muted: #191a18;
+  --fc-classic-muted-foreground: var(--muted);
+  --fc-classic-now: var(--accent-strong);
+  --fc-classic-primary: rgba(198, 166, 108, 0.22);
+  --fc-classic-primary-foreground: var(--foreground);
+  --fc-classic-strong: rgba(198, 166, 108, 0.18);
+  --fc-classic-strong-border: rgba(223, 193, 132, 0.46);
+  --fc-classic-today: rgba(198, 166, 108, 0.1);
+  --fc-border-color: rgba(214, 202, 176, 0.14);
+  --fc-button-bg-color: rgba(8, 10, 12, 0.72);
+  --fc-button-border-color: rgba(240, 237, 230, 0.18);
+  --fc-button-hover-bg-color: rgba(198, 166, 108, 0.12);
+  --fc-button-hover-border-color: rgba(223, 193, 132, 0.5);
+  --fc-button-active-bg-color: var(--accent-strong);
+  --fc-button-active-border-color: var(--accent-strong);
+  --fc-button-active-text-color: #17130d;
+  --fc-button-text-color: var(--foreground);
+  --fc-event-bg-color: rgba(198, 166, 108, 0.18);
+  --fc-event-border-color: rgba(223, 193, 132, 0.48);
+  --fc-event-text-color: var(--foreground);
+  --fc-list-event-hover-bg-color: rgba(198, 166, 108, 0.08);
+  --fc-neutral-bg-color: rgba(255, 255, 255, 0.025);
+  --fc-neutral-text-color: var(--muted);
+  --fc-now-indicator-color: var(--accent-strong);
+  --fc-page-bg-color: transparent;
+  --fc-today-bg-color: rgba(198, 166, 108, 0.07);
+}
+
+.raid-calendar .fc {
+  color: var(--foreground);
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.82rem;
+}
+
+.raid-calendar-toolbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.raid-calendar-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.raid-calendar-toolbar-actions:last-child {
+  justify-self: end;
+}
+
+.raid-calendar-toolbar-title {
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(1.2rem, 2vw, 1.65rem);
+  font-weight: 600;
+  text-align: center;
+}
+
+.raid-calendar-control {
+  display: inline-grid;
+  min-width: 3rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 1px solid rgba(240, 237, 230, 0.2);
+  border-radius: 0.625rem;
+  background: #111416;
+  color: var(--foreground);
+  padding-inline: 0.9rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.raid-calendar-control--icon {
+  width: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0;
+}
+
+.raid-calendar-control:hover {
+  border-color: rgba(223, 193, 132, 0.58);
+  background: rgba(198, 166, 108, 0.09);
+}
+
+.raid-calendar-control:active {
+  transform: translateY(1px);
+}
+
+.raid-calendar-control.is-active {
+  border-color: rgba(223, 193, 132, 0.68);
+  background: #332d24;
+  color: #f5f0e7;
+  box-shadow: inset 0 0 0 1px rgba(223, 193, 132, 0.08);
+}
+
+.raid-calendar .fc-col-header-cell-cushion,
+.raid-calendar .fc-daygrid-day-number {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.raid-calendar .fc-col-header-cell-cushion {
+  padding-block: 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.raid-calendar .fc-daygrid-day-number {
+  padding: 0.45rem 0.55rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.raid-calendar .fc-day-other .fc-daygrid-day-number {
+  opacity: 0.36;
+}
+
+.raid-calendar .fc-event {
+  border-radius: 0.35rem;
+  cursor: pointer;
+  padding: 0.12rem 0.28rem;
+  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.raid-calendar .fc-event:hover,
+.raid-calendar .fc-event:focus {
+  border-color: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.raid-calendar .raid-calendar-event {
+  background: rgba(198, 166, 108, 0.22);
+  border-color: rgba(223, 193, 132, 0.52);
+  color: var(--foreground);
+  cursor: pointer;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.raid-calendar .raid-calendar-event * {
+  cursor: pointer;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Calendar event titles stay legible on narrow day cells instead of truncating. */
+.raid-calendar .raid-calendar-event,
+.raid-calendar .raid-calendar-event * {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+}
+
+.raid-calendar .raid-calendar-event-content {
+  display: flex;
+  align-items: start;
+  gap: 0.3rem;
+  max-width: 100%;
+  line-height: 1.3;
+}
+
+.raid-calendar .raid-calendar-event-indicator {
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: 0.3rem;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  box-shadow: 0 0 0 2px rgba(223, 193, 132, 0.12);
+}
+
+.raid-calendar .raid-calendar-event-content.is-expired .raid-calendar-event-indicator {
+  background: #8f908b;
+  box-shadow: 0 0 0 2px rgba(143, 144, 139, 0.12);
+}
+
+.raid-calendar .raid-calendar-event-time {
+  white-space: nowrap !important;
+}
+
+.raid-calendar .raid-calendar-event-details {
+  display: flex;
+  flex: 1 1 0;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 0.2rem 0.3rem;
+}
+
+.raid-calendar .raid-calendar-event-status {
+  white-space: nowrap !important;
+}
+
+.raid-calendar .raid-calendar-event-content.is-expired .raid-calendar-event-title {
+  flex-basis: 100%;
+}
+
+.raid-calendar .raid-calendar-event-content.is-list .raid-calendar-event-title {
+  flex-basis: auto;
+}
+
+.raid-calendar .raid-calendar-event-content.is-list {
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.raid-calendar .raid-calendar-event-content.is-list .raid-calendar-event-indicator {
+  margin-top: 0;
+}
+
+.raid-calendar .raid-calendar-event-title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.raid-calendar .raid-calendar-event--optional {
+  background: rgba(122, 112, 73, 0.24);
+  border-color: rgba(184, 164, 104, 0.5);
+}
+
+.raid-calendar .raid-calendar-event--guild {
+  background: rgba(124, 88, 70, 0.22);
+  border-color: rgba(181, 130, 100, 0.46);
+}
+
+.raid-calendar .raid-calendar-event--forever {
+  background: rgba(121, 201, 194, 0.18);
+  border-color: rgba(142, 224, 214, 0.58);
+}
+
+.raid-calendar .raid-calendar-event--forever .raid-calendar-event-indicator {
+  background: #8ee0d6;
+  box-shadow: 0 0 0 2px rgba(142, 224, 214, 0.14);
+}
+
+/* FullCalendar's classic theme generates its own event wrapper classes. The
+   rendered content marker lets the Forever team colour reach that wrapper. */
+.raid-calendar [role="button"]:has(.raid-calendar-event-content.is-forever) {
+  --fc-event-color: rgba(121, 201, 194, 0.22) !important;
+  --fc-event-contrast-color: #eef9f6 !important;
+  border-color: rgba(142, 224, 214, 0.58) !important;
+  box-shadow: inset 0 0 0 1px rgba(142, 224, 214, 0.2);
+}
+
+.raid-calendar .raid-calendar-event-content.is-forever .raid-calendar-event-indicator {
+  background: #8ee0d6;
+  box-shadow: 0 0 0 2px rgba(142, 224, 214, 0.14);
+}
+
+.event-card--forever {
+  border-color: rgba(142, 224, 214, 0.42);
+  background: linear-gradient(105deg, rgba(121, 201, 194, 0.1), transparent 38%), rgba(15, 18, 21, 0.84);
+}
+
+.event-card--forever > div:first-child > p:first-child {
+  color: #8ee0d6;
+}
+
+.raid-calendar .raid-calendar-event--expired {
+  background: rgba(117, 119, 117, 0.15);
+  border-color: rgba(183, 180, 172, 0.3);
+  color: #aaa8a2;
+  opacity: 0.7;
+}
+
+.raid-calendar .raid-calendar-event--expired .raid-calendar-event-content,
+.raid-calendar .raid-calendar-event--expired .raid-calendar-event-time,
+.raid-calendar .raid-calendar-event--expired .raid-calendar-event-title {
+  color: #8f908b !important;
+}
+
+.raid-event-expired-badge {
+  border: 1px solid rgba(183, 180, 172, 0.32);
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.625rem;
+  color: #c1beb7;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.raid-calendar .fc-list-day-cushion {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.raid-event-dialog {
+  width: min(calc(100% - 2rem), 38rem);
+  max-height: min(84vh, 44rem);
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(223, 193, 132, 0.34);
+  border-radius: 0.875rem;
+  background: #171a1b;
+  color: var(--foreground);
+  box-shadow: 0 1.5rem 5rem rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(240, 237, 230, 0.06);
+  animation: raid-dialog-in 180ms ease-out;
+}
+
+.raid-event-dialog::backdrop {
+  background: rgba(8, 10, 12, 0.48);
+  backdrop-filter: blur(3px);
+}
+
+.raid-event-dialog-panel {
+  max-height: min(84vh, 44rem);
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at 85% 0%, rgba(198, 166, 108, 0.1), transparent 16rem),
+    #171a1b;
+}
+
+.raid-event-dialog-close {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(240, 237, 230, 0.18);
+  border-radius: 999px;
+  background: rgba(8, 10, 12, 0.72);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.raid-event-dialog-close:hover {
+  border-color: rgba(223, 193, 132, 0.62);
+  background: rgba(198, 166, 108, 0.1);
+  color: var(--accent-strong);
+}
+
+@keyframes raid-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 639px) {
+  .raid-calendar-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .raid-calendar-toolbar-title {
+    grid-row: 1;
+  }
+
+  .raid-calendar-toolbar-actions {
+    justify-self: center;
+  }
+
+  .raid-calendar-view-switch {
+    display: none;
+  }
+
+  .raid-calendar .fc-daygrid-day-frame {
+    min-height: 4.5rem;
+  }
+
+  .raid-calendar .fc-event-time {
+    display: none;
+  }
+
+  .raid-calendar .fc-event-title {
+    font-size: 0.68rem;
+  }
+}
+
+.button-primary,
+.button-secondary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.625rem;
+  padding: 0.6875rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.button-primary {
+  border: 1px solid var(--accent-strong);
+  background: var(--accent-strong);
+  color: #17130d;
+}
+
+.button-primary:hover {
+  background: #ead099;
+  border-color: #ead099;
+}
+
+.button-primary.button-forever {
+  border-color: #3d9187;
+  background: #327a72;
+  color: #f4fffd;
+  box-shadow: 0 0.65rem 1.8rem rgba(31, 102, 94, 0.2);
+}
+
+.button-primary.button-forever:hover {
+  border-color: #55aba1;
+  background: #3b8d84;
+}
+
+.button-secondary {
+  border: 1px solid rgba(240, 237, 230, 0.24);
+  background: rgba(8, 10, 12, 0.55);
+  color: var(--foreground);
+  backdrop-filter: blur(12px);
+}
+
+.button-secondary:hover {
+  border-color: rgba(223, 193, 132, 0.62);
+  background: rgba(20, 22, 23, 0.8);
+}
+
+.button-secondary.recruitment-link--retail:hover {
+  border-color: #dfc184;
+  background: rgba(223, 193, 132, 0.11);
+  color: #f1d596;
+}
+
+.button-secondary.recruitment-link--forever {
+  border-color: rgba(121, 201, 194, 0.36);
+  background: rgba(121, 201, 194, 0.07);
+  color: #bce9e3;
+}
+
+.button-secondary.recruitment-link--forever:hover {
+  border-color: #79c9c2;
+  background: rgba(121, 201, 194, 0.09);
+  color: #79c9c2;
+  box-shadow: 0 0 1.25rem rgba(121, 201, 194, 0.12);
+}
+
+.button-secondary.recruitment-link--forever:focus-visible {
+  outline-color: #79c9c2;
+}
+
+.button-primary:active,
+.button-secondary:active {
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .surface,
+  .button-secondary {
+    background: var(--surface);
+    backdrop-filter: none;
+  }
+}
