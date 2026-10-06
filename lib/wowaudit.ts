@@ -174,7 +174,9 @@ export const getGuildMemberData = cache(async (): Promise<GuildMemberData> => {
       return { members: [], source: "none", integrationStatus: "unavailable" };
     }
 
-    const [blizzardRanks] = await Promise.all([getBlizzardGuildRanks()]);
+    // Rank enrichment is optional and requires a separate Blizzard OAuth + roster
+    // request. Do not hold up the page when WoWAudit has no characters to enrich.
+    const blizzardRanks = parsed.data.length > 0 ? await getBlizzardGuildRanks() : null;
     const localByName = new Map(
       localGuildMembers.map((member) => [member.characterName.toLowerCase(), member]),
     );

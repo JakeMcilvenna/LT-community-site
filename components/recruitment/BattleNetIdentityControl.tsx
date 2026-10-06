@@ -38,6 +38,9 @@ export function BattleNetIdentityControl({
 		: `${choiceClass} hover:border-[rgba(198,166,108,0.45)] hover:bg-[rgba(198,166,108,0.045)] has-[:checked]:border-[var(--accent)] has-[:checked]:bg-[rgba(198,166,108,0.09)]`;
 	const inputClass =
 		'w-full rounded-[0.625rem] border border-white/12 bg-[#090c0e]/88 px-3.5 py-3 text-sm text-[var(--foreground)] placeholder:text-[#666863] transition-colors hover:border-white/20 focus:border-[#148eff] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#148eff]/30 disabled:cursor-not-allowed disabled:opacity-60';
+	const manualInputClass = isForever
+		? 'w-full rounded-[0.5rem] border border-[#79c9c2]/20 bg-[#071312]/88 px-3.5 py-3 text-sm text-[#eef9f6] placeholder:text-[#66817d] transition-colors hover:border-[#79c9c2]/35 focus:border-[#8ee0d6] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
+		: inputClass;
 	const idPrefix = `${variant}-battle-tag`;
 
 	const handleDisconnect = async () => {
@@ -73,8 +76,8 @@ export function BattleNetIdentityControl({
 			{source === 'manual' ? (
 				<div className='mt-4'>
 					<label htmlFor={`${idPrefix}-manual`} className='mb-2 block text-sm font-bold'>BattleTag <span className={isForever ? 'text-[#8ee0d6]' : 'text-[var(--accent-strong)]'}>*</span></label>
-					<input id={`${idPrefix}-manual`} name='battleTag' required maxLength={80} autoComplete='off' placeholder='Name#1234' value={manualBattleTag} onChange={(event) => setManualBattleTag(event.currentTarget.value)} className={inputClass} disabled={disabled} />
-					<p className='mt-2 text-xs leading-5 opacity-65'>Saved only for this browser session so it can carry between application forms.</p>
+					<input id={`${idPrefix}-manual`} name='battleTag' required maxLength={80} autoComplete='off' placeholder='Name#1234' value={manualBattleTag} onChange={(event) => setManualBattleTag(event.currentTarget.value)} className={manualInputClass} disabled={disabled} />
+					<p className={`mt-2 text-xs leading-5 ${isForever ? 'text-[#839d98]' : 'opacity-65'}`}>Saved only for this browser session so it can carry between application forms.</p>
 				</div>
 			) : (
 				<div className='mt-4 rounded-[0.625rem] border border-[#148eff]/30 bg-[#0f1d2a] p-4'>

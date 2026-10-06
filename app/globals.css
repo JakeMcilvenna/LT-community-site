@@ -103,7 +103,6 @@ input[type="radio"]:focus-visible {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  mask-image: linear-gradient(to top, black 0%, black 72%, transparent 100%);
 }
 
 .hero-ember {
@@ -112,8 +111,6 @@ input[type="radio"]:focus-visible {
   height: var(--ember-height);
   border-radius: 999px;
   background: #f1c174;
-  filter: blur(var(--ember-blur));
-  mix-blend-mode: screen;
   opacity: 0;
   box-shadow:
     0 0 0.12rem rgba(255, 235, 185, 0.94),

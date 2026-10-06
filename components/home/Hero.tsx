@@ -20,7 +20,6 @@ type Ember = {
 	x3: number;
 	x4: number;
 	opacity: number;
-	blur: number;
 };
 
 function createEmbers(count: number, seed: number): Ember[] {
@@ -58,12 +57,11 @@ function createEmbers(count: number, seed: number): Ember[] {
 			x3: round(x3),
 			x4: round(x4),
 			opacity: round(between(0.44, 0.94)),
-			blur: round(between(0, size > 4 ? 0.28 : 0.16)),
 		};
 	});
 }
 
-const embers = createEmbers(28, 0x6c617374);
+const embers = createEmbers(18, 0x6c617374);
 
 type EmberStyle = CSSProperties & {
 	'--ember-size': string;
@@ -79,7 +77,6 @@ type EmberStyle = CSSProperties & {
 	'--ember-y3': string;
 	'--ember-rise': string;
 	'--ember-opacity': number;
-	'--ember-blur': string;
 	'--ember-glow-near': string;
 	'--ember-glow-far': string;
 };
@@ -154,7 +151,6 @@ export function Hero() {
 									'--ember-y3': `${ember.rise * -0.72}vh`,
 									'--ember-rise': `${-ember.rise}vh`,
 									'--ember-opacity': ember.opacity,
-									'--ember-blur': `${ember.blur}px`,
 									'--ember-glow-near': `${Math.max(5, ember.size * 2.4)}px`,
 									'--ember-glow-far': `${Math.max(12, ember.size * 5.2)}px`,
 								} as EmberStyle

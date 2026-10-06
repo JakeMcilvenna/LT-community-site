@@ -25,6 +25,7 @@ import { BATTLE_NET_REGIONS } from "@/lib/battlenet/types";
 import { uploadRecruitmentScreenshot } from "@/lib/recruitment-screenshot";
 import { isWarcraftLogsUrl } from "@/lib/recruitment-validation";
 import { buildCharacterProfileLinks } from "@/lib/character-profile-links";
+import { DISCORD_APPLICATION_COOKIE } from "@/lib/discord-oauth-session";
 import { getClassColor } from "@/lib/warcraft";
 import { getClassIconUrl } from "@/lib/warcraft-server";
 
@@ -613,7 +614,11 @@ export async function POST(request: NextRequest) {
     const submittedApplicationType = formData.get("applicationType");
     const submittedCharacterSource = formData.get("characterSource");
     const submittedBattleTagSource = formData.get("battleTagSource");
-    const applicationTokenValue = formData.get("applicationToken");
+    const submittedApplicationToken = formData.get("applicationToken");
+    const applicationTokenValue =
+      submittedApplicationToken ??
+      request.cookies.get(DISCORD_APPLICATION_COOKIE)?.value ??
+      null;
     let verifiedDiscordIdentity: ApplicationTokenPayload | null = null;
 
     if (applicationTokenValue !== null) {
@@ -628,6 +633,13 @@ export async function POST(request: NextRequest) {
       if (submittedApplicationType !== verifiedDiscordIdentity.applicationType) {
         return NextResponse.json({ error: "This Discord application link is for a different application form." }, { status: 400 });
       }
+    }
+
+    if (!verifiedDiscordIdentity) {
+      return NextResponse.json(
+        { error: "Join Discord and verify your account before submitting your application." },
+        { status: 401 },
+      );
     }
 
     const website = formData.get("website");

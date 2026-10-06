@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, type FocusEvent, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import {
 	ArrowUpRight,
 	CheckCircle2,
+	ChevronDown,
 	Compass,
 	FileImage,
 	LoaderCircle,
@@ -35,10 +36,6 @@ type VerifiedDiscordIdentity = {
 	discordReturnUrl: string;
 };
 
-const blurReadOnlyField = (event: FocusEvent<HTMLInputElement>) => {
-	event.currentTarget.blur();
-};
-
 const inputClass =
 	'w-full rounded-[0.625rem] border border-white/12 bg-[#090c0e]/88 px-3.5 py-3 text-sm text-[var(--foreground)] placeholder:text-[#666863] transition-colors hover:border-white/20 focus:border-[var(--accent-strong)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60';
 
@@ -53,9 +50,72 @@ const foreverChoiceClass =
 
 type SubmitState =
 	| { status: 'idle' }
+	| { status: 'authenticating' }
 	| { status: 'submitting' }
 	| { status: 'success'; applicationStatusId?: string }
 	| { status: 'error'; message: string };
+
+type DiscordOAuthMessage =
+	| {
+			type: 'last-try-discord-oauth';
+			ok: true;
+			identity: VerifiedDiscordIdentity;
+	  }
+	| {
+			type: 'last-try-discord-oauth';
+			ok: false;
+			error: string;
+	  };
+
+const connectDiscord = (applicationType: ApplicationType) =>
+	new Promise<VerifiedDiscordIdentity>((resolve, reject) => {
+		const popup = window.open(
+			`/api/auth/discord?application=${encodeURIComponent(applicationType)}`,
+			'last-try-discord-oauth',
+			'popup=yes,width=540,height=760,resizable=yes,scrollbars=yes',
+		);
+		if (!popup) {
+			reject(new Error('Allow pop-ups for this site, then try again.'));
+			return;
+		}
+
+		let settled = false;
+		const finish = (error?: Error, identity?: VerifiedDiscordIdentity) => {
+			if (settled) return;
+			settled = true;
+			window.removeEventListener('message', onMessage);
+			window.clearInterval(closedCheck);
+			window.clearTimeout(timeout);
+			if (error) reject(error);
+			else if (identity) resolve(identity);
+		};
+		const onMessage = (event: MessageEvent<unknown>) => {
+			if (event.origin !== window.location.origin || event.source !== popup) return;
+			const message = event.data as Partial<DiscordOAuthMessage> | null;
+			if (!message || message.type !== 'last-try-discord-oauth') return;
+			if (message.ok && 'identity' in message && message.identity) {
+				finish(undefined, message.identity);
+			} else {
+				finish(
+					new Error(
+						'error' in message && typeof message.error === 'string'
+							? message.error
+							: 'Discord authorization could not be completed.',
+					),
+				);
+			}
+		};
+		window.addEventListener('message', onMessage);
+		const closedCheck = window.setInterval(() => {
+			if (popup.closed) {
+				finish(new Error('Discord authorization was closed before it finished.'));
+			}
+		}, 500);
+		const timeout = window.setTimeout(() => {
+			popup.close();
+			finish(new Error('Discord authorization timed out. Please try again.'));
+		}, 2 * 60 * 1_000);
+	});
 
 function Field({
 	label,
@@ -107,6 +167,60 @@ function FormSection({
 			</p>
 			<div className='mt-6 grid gap-5'>{children}</div>
 		</fieldset>
+	);
+}
+
+function DiscordVerificationNotice({ variant }: { variant: 'retail' | 'forever' }) {
+	return (
+		<div
+			className='mt-5 mb-6 flex items-start gap-3.5 rounded-[0.75rem] border border-[#5865f2]/45 bg-[#5865f2]/10 px-4 py-4 text-sm leading-6 text-[#c4c7df] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:gap-4 sm:px-5 sm:py-5'
+			data-variant={variant}>
+			<span className='grid size-9 shrink-0 place-items-center rounded-[0.5rem] border border-[#7b84f7]/35 bg-[#5865f2]/18 text-[#aeb3ff]'>
+				<ShieldCheck
+					aria-hidden='true'
+					size={19}
+					strokeWidth={1.9}
+				/>
+			</span>
+			<p className='max-w-[70ch]'>
+				<strong className='block text-[0.95rem] font-bold leading-6 text-[#f0f1ff]'>
+					Why we connect Discord
+				</strong>
+				<span className='mt-1 block'>
+					Discord handles the sign-in. We only use your verified user ID and username to add you to the Last Try server and link this application. We cannot see your password, private messages, or other servers.
+				</span>
+			</p>
+		</div>
+	);
+}
+
+function VerifiedDiscordAccount({
+	identity,
+	variant,
+}: {
+	identity: VerifiedDiscordIdentity;
+	variant: 'retail' | 'forever';
+}) {
+	const isForever = variant === 'forever';
+
+	return (
+		<div className='sm:col-span-2'>
+			<p className={`mb-2 text-sm font-bold ${isForever ? 'text-[#eef9f6]' : 'text-[var(--foreground)]'}`}>
+				Discord account
+			</p>
+			<div className='flex min-h-12 items-center justify-between gap-3 rounded-[0.625rem] border border-[#5865f2]/45 bg-[#5865f2]/8 px-3.5 py-3'>
+				<span className='min-w-0 truncate text-sm text-[#e3e5ff]'>
+					{identity.discordTag}
+				</span>
+				<span className='flex shrink-0 items-center gap-1.5 text-xs font-bold text-[#9fa6ff]'>
+					<CheckCircle2 size={14} strokeWidth={2} aria-hidden='true' />
+					Verified
+				</span>
+			</div>
+			<p className={`mt-2 text-xs leading-5 ${isForever ? 'text-[#839d98]' : 'text-[var(--muted)]'}`}>
+				Received securely from your Discord application link.
+			</p>
+		</div>
 	);
 }
 
@@ -213,9 +327,10 @@ function ApplicationNextSteps({
 									</a>
 								) : (
 									<div role='status' aria-live='polite'>
-										<span className='button-primary mt-3 cursor-wait opacity-80'>
+										<span
+											className={`button-primary mt-3 cursor-wait opacity-80 ${isForever ? 'button-forever' : ''}`}>
 											<LoaderCircle className='animate-spin' aria-hidden='true' size={17} strokeWidth={1.8} />
-											Generating channel link…
+											Preparing Discord channel…
 										</span>
 										<p className='mt-2 text-xs'>This usually takes a few seconds. Please keep this page open.</p>
 									</div>
@@ -295,6 +410,7 @@ function RetailApplicationForm({
 	const [submitState, setSubmitState] = useState<SubmitState>({
 		status: 'idle',
 	});
+	const [discordIdentity, setDiscordIdentity] = useState(verifiedDiscordIdentity);
 	const [screenshotName, setScreenshotName] = useState('');
 	const [characterSource, setCharacterSource] = useState<BattleTagSource>('battlenet');
 	const [manualWarcraftLogsUrl, setManualWarcraftLogsUrl] = useState('');
@@ -309,8 +425,8 @@ function RetailApplicationForm({
 	const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		const form = event.currentTarget;
-		const formData = new FormData(form);
-		const screenshot = formData.get('uiScreenshot');
+		const initialFormData = new FormData(form);
+		const screenshot = initialFormData.get('uiScreenshot');
 
 		if (screenshot instanceof File && screenshot.size > 4 * 1024 * 1024) {
 			setSubmitState({
@@ -320,9 +436,16 @@ function RetailApplicationForm({
 			return;
 		}
 
-		setSubmitState({ status: 'submitting' });
-
 		try {
+			let activeDiscordIdentity = discordIdentity;
+			if (!activeDiscordIdentity) {
+				setSubmitState({ status: 'authenticating' });
+				activeDiscordIdentity = await connectDiscord('retail');
+				setDiscordIdentity(activeDiscordIdentity);
+			}
+
+			setSubmitState({ status: 'submitting' });
+			const formData = new FormData(form);
 			const response = await fetch('/api/recruitment', {
 				method: 'POST',
 				body: formData,
@@ -370,7 +493,7 @@ function RetailApplicationForm({
 				</p>
 				<ApplicationNextSteps
 					discordInviteUrl={discordInviteUrl}
-					discordIdentity={verifiedDiscordIdentity}
+					discordIdentity={discordIdentity}
 					applicationStatusId={submitState.applicationStatusId}
 					variant='retail'
 				/>
@@ -378,7 +501,9 @@ function RetailApplicationForm({
 		);
 	}
 
+	const authenticating = submitState.status === 'authenticating';
 	const submitting = submitState.status === 'submitting';
+	const busy = authenticating || submitting;
 
 	return (
 		<form
@@ -428,16 +553,17 @@ function RetailApplicationForm({
 									<input id='realm' name='realm' required maxLength={80} placeholder='Tarren Mill' className={inputClass} disabled={submitting} />
 								</Field>
 								<Field label='Class' name='className' required>
-									<select id='className' name='className' required defaultValue='' className={inputClass} disabled={submitting}>
-										<option value='' disabled>Select a class</option>
-										{wowClasses.map((className) => <option key={className} value={className}>{className}</option>)}
-									</select>
+									<div className='relative'>
+										<select id='className' name='className' required defaultValue='' className={`${inputClass} appearance-none pr-10`} disabled={submitting}>
+											<option value='' disabled>Select a class</option>
+											{wowClasses.map((className) => <option key={className} value={className}>{className}</option>)}
+										</select>
+										<ChevronDown className='pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--foreground)]' size={16} aria-hidden='true' />
+									</div>
 								</Field>
-								<div className='sm:col-span-2'>
-									<Field label='Specialisation' name='specialization' required>
-										<input id='specialization' name='specialization' required maxLength={80} placeholder='Arcane' className={inputClass} disabled={submitting} />
-									</Field>
-								</div>
+								<Field label='Specialisation' name='specialization' required>
+									<input id='specialization' name='specialization' required maxLength={80} placeholder='Arcane' className={inputClass} disabled={submitting} />
+								</Field>
 								<p className='sm:col-span-2 text-xs leading-5 text-[var(--muted)]'>Manually entered characters are not ownership verified.</p>
 							</div>
 							</div>
@@ -449,33 +575,11 @@ function RetailApplicationForm({
 
 				<FormSection
 					title='About you'
-					description='These details let our officers identify you and get back in touch.'>
+					description='Discord verifies your identity automatically. Add the remaining details our officers need.'>
 					<div className='grid gap-5 sm:grid-cols-2'>
-						<Field label='Discord username' name='discordUsername' required>
-							<input
-								id='discordUsername'
-								name='discordUsername'
-								required
-								maxLength={80}
-								autoComplete='username'
-								placeholder='yourname'
-								defaultValue={verifiedDiscordIdentity?.discordTag}
-								readOnly={Boolean(verifiedDiscordIdentity)}
-								tabIndex={verifiedDiscordIdentity ? -1 : undefined}
-								onFocus={verifiedDiscordIdentity ? blurReadOnlyField : undefined}
-								aria-describedby={verifiedDiscordIdentity ? 'discordUsernameVerified' : undefined}
-								className={`${inputClass} read-only:pointer-events-none read-only:cursor-default read-only:select-none read-only:border-[#5865f2]/45 read-only:bg-[#5865f2]/8 read-only:text-[#b5b8c8] read-only:caret-transparent read-only:focus:border-[#5865f2]/45`}
-								disabled={submitting}
-							/>
-							{verifiedDiscordIdentity ? (
-								<p
-									id='discordUsernameVerified'
-									className='mt-2 flex items-center gap-1.5 text-xs font-bold text-[#8792ff]'>
-									<CheckCircle2 size={14} strokeWidth={2} aria-hidden='true' />
-									Verified from Discord
-								</p>
-							) : null}
-						</Field>
+						{applicationToken && discordIdentity ? (
+							<VerifiedDiscordAccount identity={discordIdentity} variant='retail' />
+						) : null}
 						<Field
 							label='Email address'
 							name='email'
@@ -723,6 +827,8 @@ function RetailApplicationForm({
 						</div>
 					) : null}
 
+					{!discordIdentity ? <DiscordVerificationNotice variant='retail' /> : null}
+
 					<div className='mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
 						<p className='max-w-md text-xs leading-5 text-[var(--muted)]'>
 							Your application is not stored on this website.
@@ -730,11 +836,23 @@ function RetailApplicationForm({
 						<button
 							type='submit'
 							className='button-primary min-w-44'
-							disabled={submitting}>
-							{submitting ? 'Sending application...' : 'Submit application'}
-							{!submitting ? (
-								<Send size={16} strokeWidth={1.8} aria-hidden='true' />
-							) : null}
+							disabled={busy}>
+							{authenticating
+								? 'Joining Discord...'
+								: submitting
+									? 'Sending application...'
+									: discordIdentity
+										? 'Submit application'
+										: 'Join Discord & submit'}
+							{!busy ? (
+								discordIdentity ? (
+									<Send size={16} strokeWidth={1.8} aria-hidden='true' />
+								) : (
+									<MessageCircle size={16} strokeWidth={1.8} aria-hidden='true' />
+								)
+							) : (
+								<LoaderCircle className='animate-spin' size={16} strokeWidth={1.8} aria-hidden='true' />
+							)}
 						</button>
 					</div>
 				</div>
@@ -757,14 +875,21 @@ function ForeverApplicationForm({
 	const [submitState, setSubmitState] = useState<SubmitState>({
 		status: 'idle',
 	});
+	const [discordIdentity, setDiscordIdentity] = useState(verifiedDiscordIdentity);
 	const [battleTagSource, setBattleTagSource] = useState<BattleTagSource>('battlenet');
 
 	const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		const form = event.currentTarget;
-		setSubmitState({ status: 'submitting' });
-
 		try {
+			let activeDiscordIdentity = discordIdentity;
+			if (!activeDiscordIdentity) {
+				setSubmitState({ status: 'authenticating' });
+				activeDiscordIdentity = await connectDiscord('forever');
+				setDiscordIdentity(activeDiscordIdentity);
+			}
+
+			setSubmitState({ status: 'submitting' });
 			const response = await fetch('/api/recruitment', {
 				method: 'POST',
 				body: new FormData(form),
@@ -813,7 +938,7 @@ function ForeverApplicationForm({
 				</p>
 				<ApplicationNextSteps
 					discordInviteUrl={discordInviteUrl}
-					discordIdentity={verifiedDiscordIdentity}
+					discordIdentity={discordIdentity}
 					applicationStatusId={submitState.applicationStatusId}
 					variant='forever'
 				/>
@@ -821,7 +946,9 @@ function ForeverApplicationForm({
 		);
 	}
 
+	const authenticating = submitState.status === 'authenticating';
 	const submitting = submitState.status === 'submitting';
+	const busy = authenticating || submitting;
 
 	return (
 		<form
@@ -856,37 +983,12 @@ function ForeverApplicationForm({
 			<div className='grid gap-9 px-5 py-7 text-[#eef9f6] sm:px-8 sm:py-9'>
 				<FormSection
 					title='Your adventurer'
-					description='Tell us who you are and how our officers can reach you.'>
+					description='Discord verifies your identity automatically. Tell us a little more about yourself.'>
 					<BattleNetIdentityControl variant='forever' source={battleTagSource} sourceName='battleTagSource' onSourceChange={setBattleTagSource} controller={battleNetIdentity} disabled={submitting} />
 					<div className='grid gap-5 sm:grid-cols-2'>
-						<Field
-							label='Discord username'
-							name='foreverDiscordUsername'
-							required>
-							<input
-								id='foreverDiscordUsername'
-								name='discordUsername'
-								required
-								maxLength={80}
-								autoComplete='username'
-								placeholder='yourname'
-								defaultValue={verifiedDiscordIdentity?.discordTag}
-								readOnly={Boolean(verifiedDiscordIdentity)}
-								tabIndex={verifiedDiscordIdentity ? -1 : undefined}
-								onFocus={verifiedDiscordIdentity ? blurReadOnlyField : undefined}
-								aria-describedby={verifiedDiscordIdentity ? 'foreverDiscordUsernameVerified' : undefined}
-								className={`${foreverInputClass} read-only:pointer-events-none read-only:cursor-default read-only:select-none read-only:border-[#79c9c2]/50 read-only:bg-[#79c9c2]/8 read-only:text-[#aec5c1] read-only:caret-transparent read-only:focus:border-[#79c9c2]/50`}
-								disabled={submitting}
-							/>
-							{verifiedDiscordIdentity ? (
-								<p
-									id='foreverDiscordUsernameVerified'
-									className='mt-2 flex items-center gap-1.5 text-xs font-bold text-[#8ee0d6]'>
-									<CheckCircle2 size={14} strokeWidth={2} aria-hidden='true' />
-									Verified from Discord
-								</p>
-							) : null}
-						</Field>
+						{applicationToken && discordIdentity ? (
+							<VerifiedDiscordAccount identity={discordIdentity} variant='forever' />
+						) : null}
 						<Field
 							label='Email address'
 							name='foreverEmail'
@@ -1131,6 +1233,8 @@ function ForeverApplicationForm({
 						</div>
 					) : null}
 
+					{!discordIdentity ? <DiscordVerificationNotice variant='forever' /> : null}
+
 					<div className='mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
 						<p className='max-w-md text-xs leading-5 text-[#839d98]'>
 							Your application is not stored on this website.
@@ -1138,13 +1242,23 @@ function ForeverApplicationForm({
 						<button
 							type='submit'
 							className='button-primary button-forever min-w-44'
-							disabled={submitting}>
-							{submitting
-								? 'Sending application...'
-								: 'Submit Forever application'}
-							{!submitting ? (
-								<Send size={16} strokeWidth={1.8} aria-hidden='true' />
-							) : null}
+							disabled={busy}>
+							{authenticating
+								? 'Joining Discord...'
+								: submitting
+									? 'Sending application...'
+									: discordIdentity
+										? 'Submit Forever application'
+										: 'Join Discord & submit'}
+							{!busy ? (
+								discordIdentity ? (
+									<Send size={16} strokeWidth={1.8} aria-hidden='true' />
+								) : (
+									<MessageCircle size={16} strokeWidth={1.8} aria-hidden='true' />
+								)
+							) : (
+								<LoaderCircle className='animate-spin' size={16} strokeWidth={1.8} aria-hidden='true' />
+							)}
 						</button>
 					</div>
 				</div>

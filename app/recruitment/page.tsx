@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { ShieldAlert } from "lucide-react";
 
 import { RecruitmentHub } from "@/components/recruitment/RecruitmentHub";
 import { PageHero } from "@/components/ui/PageHero";
 import type { ApplicationType } from "@/config/application-types";
 import { verifyApplicationToken } from "@/lib/application-token";
+import { DISCORD_APPLICATION_COOKIE } from "@/lib/discord-oauth-session";
 import { getDiscordServerStatus } from "@/lib/discord";
 import { getOpenRecruitmentNeeds } from "@/lib/recruitment";
 import { getRecruitmentData } from "@/lib/wowaudit";
@@ -26,10 +28,20 @@ export default async function RecruitmentPage({
   const defaultApplicationType: ApplicationType =
     requestedApplication === "forever" ? "forever" : "retail";
   const hasApplicationToken = token !== undefined;
-  const verifiedToken = typeof token === "string" ? verifyApplicationToken(token) : null;
+  const cookieStore = await cookies();
+  const websiteSessionToken = cookieStore.get(DISCORD_APPLICATION_COOKIE)?.value;
+  const linkToken = typeof token === "string" ? verifyApplicationToken(token) : null;
+  const websiteSession = websiteSessionToken
+    ? verifyApplicationToken(websiteSessionToken)
+    : null;
+  const verifiedToken = hasApplicationToken
+    ? linkToken
+    : websiteSession?.applicationType === defaultApplicationType
+      ? websiteSession
+      : null;
   const hasInvalidApplicationToken =
     hasApplicationToken &&
-    (!verifiedToken || verifiedToken.applicationType !== defaultApplicationType);
+    (!linkToken || linkToken.applicationType !== defaultApplicationType);
   const [data, discordServer] = await Promise.all([getRecruitmentData(), getDiscordServerStatus()]);
   const openNeeds = getOpenRecruitmentNeeds(data.needs);
   const discordInviteUrl = discordServer.status === "available" ? discordServer.inviteUrl : undefined;
@@ -83,7 +95,7 @@ export default async function RecruitmentPage({
                 }
               : undefined
           }
-          applicationToken={verifiedToken && typeof token === "string" ? token : undefined}
+          applicationToken={linkToken && typeof token === "string" ? token : undefined}
         />
       )}
     </>

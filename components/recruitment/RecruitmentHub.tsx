@@ -2,13 +2,11 @@
 
 import {
 	ArrowUpRight,
-	Backpack,
 	CalendarDays,
 	CheckCircle2,
 	Clock3,
 	Flag,
 	Globe2,
-	Headphones,
 	MessageSquareText,
 	ScrollText,
 	Swords,
@@ -215,7 +213,7 @@ export function RecruitmentHub({
 										Before you apply
 									</h3>
 									<p className='mt-3 max-w-md text-sm leading-6 text-[var(--muted)]'>
-										Please make sure our realm, raid schedule, and team expectations suit you.
+										A quick look at our realm and approach to raiding.
 									</p>
 								</div>
 
@@ -227,51 +225,7 @@ export function RecruitmentHub({
 										<div>
 											<p className='font-bold text-[var(--foreground)]'>Silvermoon EU</p>
 											<p className='mt-1 text-sm leading-6 text-[var(--muted)]'>
-												Our Retail guild is based on Silvermoon in the EU region.
-											</p>
-										</div>
-									</li>
-									<li className='flex gap-3.5'>
-										<span className='grid size-9 shrink-0 place-items-center rounded-[0.5rem] border border-[rgba(198,166,108,0.3)] bg-[rgba(198,166,108,0.1)] text-[var(--accent-strong)]'>
-											<CalendarDays size={17} strokeWidth={1.7} aria-hidden='true' />
-										</span>
-										<div>
-											<p className='font-bold text-[var(--foreground)]'>Wednesday &amp; Sunday</p>
-											<p className='mt-1 text-sm leading-6 text-[var(--muted)]'>
-												We raid twice a week from 19:30 to 22:30.
-											</p>
-										</div>
-									</li>
-									<li className='flex gap-3.5'>
-										<span className='grid size-9 shrink-0 place-items-center rounded-[0.5rem] border border-[rgba(198,166,108,0.3)] bg-[rgba(198,166,108,0.1)] text-[var(--accent-strong)]'>
-											<CheckCircle2 size={17} strokeWidth={1.7} aria-hidden='true' />
-										</span>
-										<div>
-											<p className='font-bold text-[var(--foreground)]'>Regular raid attendance</p>
-											<p className='mt-1 text-sm leading-6 text-[var(--muted)]'>
-												Raiders are expected to attend regularly and let the team know when they cannot make a night.
-											</p>
-										</div>
-									</li>
-									<li className='flex gap-3.5'>
-										<span className='grid size-9 shrink-0 place-items-center rounded-[0.5rem] border border-[rgba(198,166,108,0.3)] bg-[rgba(198,166,108,0.1)] text-[var(--accent-strong)]'>
-											<Headphones size={17} strokeWidth={1.7} aria-hidden='true' />
-										</span>
-										<div>
-											<p className='font-bold text-[var(--foreground)]'>Discord voice required</p>
-											<p className='mt-1 text-sm leading-6 text-[var(--muted)]'>
-												Raiders must join Discord voice during raids to hear calls and coordinate with the team.
-											</p>
-										</div>
-									</li>
-									<li className='flex gap-3.5'>
-										<span className='grid size-9 shrink-0 place-items-center rounded-[0.5rem] border border-[rgba(198,166,108,0.3)] bg-[rgba(198,166,108,0.1)] text-[var(--accent-strong)]'>
-											<Backpack size={17} strokeWidth={1.7} aria-hidden='true' />
-										</span>
-										<div>
-											<p className='font-bold text-[var(--foreground)]'>Come prepared</p>
-											<p className='mt-1 text-sm leading-6 text-[var(--muted)]'>
-												Arrive on time with your character, consumables, and knowledge of the planned encounters ready.
+												Our Retail guild is on Silvermoon EU.
 											</p>
 										</div>
 									</li>
@@ -282,8 +236,17 @@ export function RecruitmentHub({
 										<div>
 											<p className='font-bold text-[var(--foreground)]'>Relaxed progression</p>
 											<p className='mt-1 text-sm leading-6 text-[var(--muted)]'>
-												We take progression seriously enough while keeping the team friendly, patient, and fun.
+												Steady progress with a friendly, patient team.
 											</p>
+										</div>
+									</li>
+									<li className='flex gap-3.5'>
+										<span className='grid size-9 shrink-0 place-items-center rounded-[0.5rem] border border-[rgba(198,166,108,0.3)] bg-[rgba(198,166,108,0.1)] text-[var(--accent-strong)]'>
+											<CalendarDays size={17} strokeWidth={1.7} aria-hidden='true' />
+										</span>
+										<div>
+											<p className='font-bold text-[var(--foreground)]'>Raiding schedule</p>
+											<p className='mt-1 text-sm leading-6 text-[var(--muted)]'>Wednesday &amp; Sunday · 19:30–22:30</p>
 										</div>
 									</li>
 								</ul>
@@ -328,30 +291,30 @@ export function RecruitmentHub({
 										Before you apply
 									</h3>
 									<p className='mt-3 max-w-md text-sm leading-6 text-[#839d98]'>
-										Please make sure our faction, focus, and expected raid commitment suit you.
+										The essentials about Last Try Forever.
 									</p>
 								</div>
 
 								<ul className='grid gap-x-7 gap-y-6 sm:grid-cols-2'>
 									<li className='flex gap-3.5'>
 										<span className='grid size-9 shrink-0 place-items-center rounded-[0.5rem] border border-[#79c9c2]/30 bg-[#79c9c2]/10 text-[#8ee0d6]'>
-											<Swords size={17} strokeWidth={1.7} aria-hidden='true' />
+											<Flag size={17} strokeWidth={1.7} aria-hidden='true' />
 										</span>
 										<div>
-											<p className='font-bold text-[#eef9f6]'>Alliance PvP guild</p>
+											<p className='font-bold text-[#eef9f6]'>Alliance EU guild</p>
 											<p className='mt-1 text-sm leading-6 text-[#839d98]'>
-												Last Try Forever will be an Alliance guild with a strong PvP focus.
+												An Alliance guild in the EU region.
 											</p>
 										</div>
 									</li>
 									<li className='flex gap-3.5'>
 										<span className='grid size-9 shrink-0 place-items-center rounded-[0.5rem] border border-[#79c9c2]/30 bg-[#79c9c2]/10 text-[#8ee0d6]'>
-											<Globe2 size={17} strokeWidth={1.7} aria-hidden='true' />
+											<Swords size={17} strokeWidth={1.7} aria-hidden='true' />
 										</span>
 										<div>
-											<p className='font-bold text-[#eef9f6]'>EU region</p>
+											<p className='font-bold text-[#eef9f6]'>PvP realm</p>
 											<p className='mt-1 text-sm leading-6 text-[#839d98]'>
-												We are an EU guild. Raid times and guild events will be listed in server time.
+												We play on a PvP realm.
 											</p>
 										</div>
 									</li>
@@ -360,43 +323,8 @@ export function RecruitmentHub({
 											<CalendarDays size={17} strokeWidth={1.7} aria-hidden='true' />
 										</span>
 										<div>
-											<p className='font-bold text-[#eef9f6]'>Raiding is optional</p>
-											<p className='mt-1 text-sm leading-6 text-[#839d98]'>
-												Raiding is completely optional. For those who join the raid team, we plan to run two three-hour sessions each week. Exact days and times will be confirmed later.
-											</p>
-										</div>
-									</li>
-									<li className='flex gap-3.5'>
-										<span className='grid size-9 shrink-0 place-items-center rounded-[0.5rem] border border-[#79c9c2]/30 bg-[#79c9c2]/10 text-[#8ee0d6]'>
-											<CheckCircle2 size={17} strokeWidth={1.7} aria-hidden='true' />
-										</span>
-										<div>
-											<p className='font-bold text-[#eef9f6]'>Regular raid attendance</p>
-											<p className='mt-1 text-sm leading-6 text-[#839d98]'>
-												Players who join the raid team are expected to maintain regular attendance and let the team know when they cannot attend.
-											</p>
-										</div>
-									</li>
-									<li className='flex gap-3.5'>
-										<span className='grid size-9 shrink-0 place-items-center rounded-[0.5rem] border border-[#79c9c2]/30 bg-[#79c9c2]/10 text-[#8ee0d6]'>
-											<Headphones size={17} strokeWidth={1.7} aria-hidden='true' />
-										</span>
-										<div>
-											<p className='font-bold text-[#eef9f6]'>Discord voice required</p>
-											<p className='mt-1 text-sm leading-6 text-[#839d98]'>
-												Raiders must join Discord voice during raids so they can hear instructions and coordinate with the team.
-											</p>
-										</div>
-									</li>
-									<li className='flex gap-3.5'>
-										<span className='grid size-9 shrink-0 place-items-center rounded-[0.5rem] border border-[#79c9c2]/30 bg-[#79c9c2]/10 text-[#8ee0d6]'>
-											<Backpack size={17} strokeWidth={1.7} aria-hidden='true' />
-										</span>
-										<div>
-											<p className='font-bold text-[#eef9f6]'>Come prepared</p>
-											<p className='mt-1 text-sm leading-6 text-[#839d98]'>
-												Raiders should arrive on time with their character, consumables, and knowledge of the planned encounters ready.
-											</p>
+											<p className='font-bold text-[#eef9f6]'>Raiding schedule</p>
+											<p className='mt-1 text-sm leading-6 text-[#839d98]'>Wednesday &amp; Sunday · 19:30–22:30</p>
 										</div>
 									</li>
 								</ul>
@@ -406,8 +334,8 @@ export function RecruitmentHub({
 								<div className='flex items-start gap-3'>
 									<MessageSquareText className='mt-0.5 shrink-0 text-[#79c9c2]' size={18} strokeWidth={1.7} aria-hidden='true' />
 									<div>
-										<p className='text-sm font-bold text-[#eef9f6]'>Join our Discord for the latest information</p>
-										<p className='mt-1 text-xs leading-5 text-[#839d98]'>We will announce the confirmed raid schedule there.</p>
+										<p className='text-sm font-bold text-[#eef9f6]'>Questions before you apply?</p>
+										<p className='mt-1 text-xs leading-5 text-[#839d98]'>Join our Discord and speak to an officer.</p>
 									</div>
 								</div>
 								{discordInviteUrl ? (

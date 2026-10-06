@@ -7,7 +7,7 @@ import { z } from "zod";
 import { APPLICATION_TYPE_VALUES, type ApplicationType } from "@/config/application-types";
 
 const TOKEN_VERSION = 1 as const;
-const TOKEN_LIFETIME_SECONDS = 24 * 60 * 60;
+export const APPLICATION_TOKEN_LIFETIME_SECONDS = 24 * 60 * 60;
 const DISCORD_SNOWFLAKE_PATTERN = /^\d{17,20}$/;
 
 const applicationTokenPayloadSchema = z
@@ -62,7 +62,7 @@ export function createApplicationToken(input: CreateApplicationTokenInput) {
     version: TOKEN_VERSION,
     ...input,
     issuedAt,
-    expiresAt: issuedAt + TOKEN_LIFETIME_SECONDS,
+    expiresAt: issuedAt + APPLICATION_TOKEN_LIFETIME_SECONDS,
     nonce: randomBytes(18).toString("base64url"),
   });
   const encodedPayload = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
@@ -105,7 +105,7 @@ export function verifyApplicationToken(token: string): ApplicationTokenPayload |
       payload.guildId !== getConfiguredGuildId() ||
       payload.expiresAt <= now ||
       payload.issuedAt > now ||
-      payload.expiresAt - payload.issuedAt !== TOKEN_LIFETIME_SECONDS
+      payload.expiresAt - payload.issuedAt !== APPLICATION_TOKEN_LIFETIME_SECONDS
     ) {
       return null;
     }
