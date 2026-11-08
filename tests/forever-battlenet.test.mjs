@@ -149,7 +149,7 @@ async function submissionHarness(ownedCharacter) {
     '@/lib/botghost-values': { createBotGhostVariable },
     '@/lib/battlenet/types': { BATTLE_NET_REGIONS: ['eu', 'us', 'kr', 'tw'] },
     '@/lib/battlenet/session': { BATTLE_NET_SESSION_COOKIE: 'session', readRecruitmentSession: () => signedSession },
-    '@/lib/battlenet/forever-client': { resolveOwnedForeverCharacter: async (actualSession, name) => {
+    '@/lib/battlenet/forever-client': { getForeverCharacterDetails: async (actualSession, name) => {
       assert.equal(actualSession, signedSession);
       return ownedCharacter?.fullName === name ? ownedCharacter : null;
     } },
@@ -199,4 +199,49 @@ test('Forever manual fallback cannot claim verified character ownership', async 
   const variables = Object.fromEntries(harness.deliveries[0].variables.map(({ name, value }) => [name, value]));
   assert.equal(variables.character_verified, 'No');
   assert.equal(variables.character_id, 'Not provided');
+});
+
+test('Forever sends supplied character metadata and clickable links to BotGhost', async () => {
+  const details = {
+    ...normalizeForeverAccountCharacters(profile, 'eu')[0],
+    specialization: 'Frost',
+    level: 26,
+    armoryUrl: 'https://worldofwarcraft.blizzard.com/en-gb/forever/eu/armory/character/asha-brightvale',
+    raiderIoProfileUrl: 'https://forever.raider.io/characters/eu/pvp/Asha%20Brightvale',
+  };
+  const harness = await submissionHarness(details);
+  for (const [key, value] of Object.entries({ className: 'Warlock', level: '99', specialization: 'Fire', armoryUrl: 'https://untrusted.example/armory', raiderIoProfileUrl: 'https://untrusted.example/rio' })) {
+    harness.form.set(key, value);
+  }
+  assert.equal((await harness.submit()).status, 200);
+  const variables = Object.fromEntries(harness.deliveries[0].variables.map(({ name, value }) => [name, value]));
+  assert.equal(variables.class, 'Mage');
+  assert.equal(variables.level, '26');
+  assert.equal(variables.specialisation, 'Frost');
+  assert.equal(variables.armory_url, details.armoryUrl);
+  assert.equal(variables.raider_io_profile_url, details.raiderIoProfileUrl);
+  assert.match(variables.character_details, /\*\*Level:\*\* 26/);
+  assert(variables.character_details.includes(`[Armory](${details.armoryUrl})`));
+  assert(variables.application_summary.includes(details.raiderIoProfileUrl));
+  assert.doesNotMatch(variables.character_details, /untrusted|Warlock|99/);
+});
+
+test('Forever character details omit unavailable spec and links without blocking delivery', async () => {
+  const harness = await submissionHarness(normalizeForeverAccountCharacters(profile, 'eu')[0]);
+  assert.equal((await harness.submit()).status, 200);
+  const variables = Object.fromEntries(harness.deliveries[0].variables.map(({ name, value }) => [name, value]));
+  assert.equal(variables.specialisation, 'Not provided');
+  assert.equal(variables.raider_io_profile_url, 'Not provided');
+  assert.equal(variables.character_details, '**Class:** Mage\n**Level:** 25');
+});
+
+test('Forever manual submissions cannot supply fabricated character metadata or links', async () => {
+  const harness = await submissionHarness(null);
+  harness.form.set('characterSource', 'manual');
+  for (const [key, value] of Object.entries({ className: 'Mage', level: '60', specialization: 'Frost', armoryUrl: 'https://untrusted.example', raiderIoProfileUrl: 'https://untrusted.example' })) harness.form.set(key, value);
+  assert.equal((await harness.submit()).status, 200);
+  const variables = Object.fromEntries(harness.deliveries[0].variables.map(({ name, value }) => [name, value]));
+  assert.equal(variables.level, 'Not provided');
+  assert.equal(variables.armory_url, 'Not provided');
+  assert.equal(variables.character_details, 'Not supplied.');
 });

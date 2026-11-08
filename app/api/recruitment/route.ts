@@ -17,12 +17,12 @@ import { verifyApplicationToken, type ApplicationTokenPayload } from "@/lib/appl
 import { sendBotGhostApplication } from "@/lib/botghost";
 import { createBotGhostVariable, type BotGhostWebhookVariable } from "@/lib/botghost-values";
 import { resolveVerifiedCharacter } from "@/lib/battlenet/client";
-import { resolveOwnedForeverCharacter } from "@/lib/battlenet/forever-client";
+import { getForeverCharacterDetails } from "@/lib/battlenet/forever-client";
 import {
   BATTLE_NET_SESSION_COOKIE,
   readRecruitmentSession,
 } from "@/lib/battlenet/session";
-import { BATTLE_NET_REGIONS, type VerifiedForeverCharacter } from "@/lib/battlenet/types";
+import { BATTLE_NET_REGIONS, type VerifiedForeverCharacterDetails } from "@/lib/battlenet/types";
 import { uploadRecruitmentScreenshot } from "@/lib/recruitment-screenshot";
 import {
   FOREVER_CHARACTER_NAME_HINT,
@@ -123,6 +123,11 @@ const foreverFormFields = {
   characterSource: z.enum(["battlenet", "manual"]),
   characterVerified: z.boolean(),
   characterId: requiredText("Character ID", 100).optional(),
+  className: z.string().max(80).optional(),
+  level: z.number().int().nonnegative().optional(),
+  specialization: z.string().max(160).optional(),
+  armoryUrl: z.string().url().max(500).optional(),
+  raiderIoProfileUrl: z.string().url().max(500).optional(),
   characterName: requiredText("Character name", 25)
     .refine(isValidForeverCharacterName, FOREVER_CHARACTER_NAME_HINT),
   faction: z.literal(foreverFaction),
@@ -312,10 +317,30 @@ const buildRetailEmbed = (application: RetailApplication, screenshotFilename?: s
   };
 };
 
+const foreverCharacterDetailRows = (application: ForeverApplication): Array<[string, string]> => {
+  const rows: Array<[string, string]> = [];
+  if (application.className) rows.push(["Class", application.className]);
+  if (application.level !== undefined) rows.push(["Level", String(application.level)]);
+  if (application.specialization) rows.push(["Spec", application.specialization]);
+  if (application.armoryUrl) rows.push(["Armory", application.armoryUrl]);
+  if (application.raiderIoProfileUrl) rows.push(["Raider.IO", application.raiderIoProfileUrl]);
+  return rows;
+};
+
+const buildForeverCharacterDetails = (application: ForeverApplication) => {
+  const lines = foreverCharacterDetailRows(application).map(([label, value]) =>
+    label === "Armory" || label === "Raider.IO"
+      ? `[${label}](${value})`
+      : `**${label}:** ${safeSummaryText(value, 160)}`,
+  );
+  return lines.join("\n") || "Not supplied.";
+};
+
 const buildFullForeverApplication = (application: ForeverApplication) => {
   const rows: Array<[string, string]> = [
     ["Character", application.characterName],
     ["Character ownership", application.characterVerified ? "Battle.net verified" : "Not verified (manual entry)"],
+    ...foreverCharacterDetailRows(application),
     ["BattleTag", application.battleTag],
     ["BattleTag source", application.battleTagSource === "battlenet" ? "Battle.net verified" : "Manual"],
     ["Battle.net region", application.battleTagSource === "battlenet" ? application.battleNetRegion.toUpperCase() : "Not provided"],
@@ -349,6 +374,7 @@ const buildForeverEmbed = (application: ForeverApplication) => {
       value: `\`\`\`text\nCharacter  ${codeBlockText(application.characterName)}\nBattleTag  ${codeBlockText(application.battleTag)}\nDiscord    ${codeBlockText(application.discordUsername)}\nEmail      ${codeBlockText(application.email || "Not provided")}\n\`\`\``,
       inline: false,
     },
+    ...(foreverCharacterDetailRows(application).length ? [{ name: "⚔️ Character details", value: buildForeverCharacterDetails(application), inline: false }] : []),
     { name: "🧭 Direction", value: `**Faction:** ${application.faction}\n**Roles:** ${application.roleInterests.join(", ")}\n**Background:** ${application.experienceLevel}`, inline: false },
     { name: "🗺️ Character plans", value: application.characterPlans, inline: false },
     { name: "🎯 Goals", value: application.gameGoals.join("\n"), inline: false },
@@ -457,6 +483,7 @@ const buildForeverApplicationSummary = (
   `**Applicant:** <@${discordIdentity.discordUserId}>`,
   `**Character:** ${safeSummaryText(application.characterName, 40)}`,
   `**Character ownership:** ${application.characterVerified ? "Battle.net verified" : "Not verified (manual entry)"}`,
+  ...(foreverCharacterDetailRows(application).length ? [buildForeverCharacterDetails(application)] : []),
   `**Discord:** ${safeSummaryText(discordIdentity.discordTag, 100)}`,
   `**BattleTag:** ${safeSummaryText(application.battleTag, 80)}`,
   `**Country / timezone:** ${safeSummaryText(application.country, 80)}`,
@@ -579,6 +606,12 @@ const buildBotGhostVariables = (
     ...coreVariables,
     ...sharedVariables,
     createBotGhostVariable("character", application.characterName),
+    createBotGhostVariable("class", application.className),
+    createBotGhostVariable("level", application.level),
+    createBotGhostVariable("specialisation", application.specialization),
+    createBotGhostVariable("armory_url", application.armoryUrl),
+    createBotGhostVariable("raider_io_profile_url", application.raiderIoProfileUrl),
+    createBotGhostVariable("character_details", buildForeverCharacterDetails(application)),
     createBotGhostVariable("character_source", application.characterSource === "battlenet" ? "Battle.net" : "Manual"),
     createBotGhostVariable("character_verified", application.characterVerified),
     createBotGhostVariable("character_id", application.characterId),
@@ -753,7 +786,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let verifiedForever: VerifiedForeverCharacter | undefined;
+    let verifiedForever: VerifiedForeverCharacterDetails | undefined;
     if (submittedApplicationType === "forever" && foreverCharacterSource === "battlenet") {
       if (!foreverBattleNetSession) {
         return NextResponse.json({ error: "Connect Battle.net or enter your character manually." }, { status: 401 });
@@ -763,7 +796,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Choose your Forever character." }, { status: 400 });
       }
       try {
-        const character = await resolveOwnedForeverCharacter(foreverBattleNetSession, characterName);
+        const character = await getForeverCharacterDetails(foreverBattleNetSession, characterName);
         if (!character) {
           return NextResponse.json({ error: "That Forever character is no longer available on this Battle.net account. Refresh the list or enter it manually." }, { status: 409 });
         }
@@ -794,14 +827,15 @@ export async function POST(request: NextRequest) {
       realm: verifiedRetail?.realm ?? formData.get("realm"),
       realmSlug: verifiedRetail?.realmSlug,
       region: verifiedRetail?.region,
-      className: verifiedRetail?.className ?? formData.get("className"),
-      specialization: verifiedRetail?.specialization ?? formData.get("specialization"),
-      level: verifiedRetail?.level,
+      className: verifiedRetail?.className ?? (submittedApplicationType === "forever" ? verifiedForever?.className : formData.get("className")),
+      specialization: verifiedRetail?.specialization ?? (submittedApplicationType === "forever" ? verifiedForever?.specialization : formData.get("specialization")),
+      level: verifiedRetail?.level ?? verifiedForever?.level,
+      armoryUrl: verifiedForever?.armoryUrl,
       faction: submittedApplicationType === "forever" ? foreverFaction : verifiedRetail?.faction,
       itemLevel: verifiedRetail?.itemLevel,
       raiderIoScore: verifiedRetail?.raiderIoScore,
       raidProgression: verifiedRetail?.raidProgression,
-      raiderIoProfileUrl: verifiedRetail?.raiderIoProfileUrl,
+      raiderIoProfileUrl: verifiedRetail?.raiderIoProfileUrl ?? verifiedForever?.raiderIoProfileUrl,
       battleNetAccountId: verifiedRetail?.battleNetAccountId,
       warcraftLogsUrl: verifiedRetail?.warcraftLogsUrl ?? formData.get("warcraftLogsUrl"),
       englishAbility: formData.get("englishAbility") ?? "",
