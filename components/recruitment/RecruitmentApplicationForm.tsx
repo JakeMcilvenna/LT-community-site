@@ -997,7 +997,7 @@ function ForeverApplicationForm({
 						<Field
 							label='Character name'
 							name='foreverCharacterName'
-							hint={FOREVER_CHARACTER_NAME_HINT}
+							hint='First and last name, 2–12 letters each.'
 							required>
 							<input
 								id='foreverCharacterName'
