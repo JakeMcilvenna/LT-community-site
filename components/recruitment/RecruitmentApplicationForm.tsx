@@ -28,6 +28,11 @@ import { BattleNetCharacterPicker } from '@/components/recruitment/BattleNetChar
 import { BattleNetIdentityControl, type BattleTagSource } from '@/components/recruitment/BattleNetIdentityControl';
 import { CHARACTER_SELECTION_STORAGE_KEY } from '@/components/recruitment/recruitment-storage';
 import { useBattleNetIdentity, type BattleNetIdentityController } from '@/components/recruitment/useBattleNetIdentity';
+import {
+	FOREVER_CHARACTER_NAME_HINT,
+	FOREVER_CHARACTER_NAME_PATTERN,
+	isValidForeverCharacterName,
+} from '@/lib/recruitment-validation';
 
 type VerifiedDiscordIdentity = {
 	discordUserId: string;
@@ -989,13 +994,28 @@ function ForeverApplicationForm({
 						{applicationToken && discordIdentity ? (
 							<VerifiedDiscordAccount identity={discordIdentity} variant='forever' />
 						) : null}
-						<Field label='Character name' name='foreverCharacterName' required>
+						<Field
+							label='Character name'
+							name='foreverCharacterName'
+							hint={FOREVER_CHARACTER_NAME_HINT}
+							required>
 							<input
 								id='foreverCharacterName'
 								name='characterName'
 								required
-								maxLength={40}
-								placeholder='Examplemage'
+								minLength={5}
+								maxLength={25}
+								pattern={FOREVER_CHARACTER_NAME_PATTERN}
+								title={FOREVER_CHARACTER_NAME_HINT}
+								onInput={(event) => {
+									const input = event.currentTarget;
+									input.setCustomValidity(
+										input.value && !isValidForeverCharacterName(input.value)
+											? FOREVER_CHARACTER_NAME_HINT
+											: '',
+									);
+								}}
+								placeholder='Asha Brightvale'
 								className={foreverInputClass}
 								disabled={submitting}
 							/>

@@ -23,7 +23,11 @@ import {
 } from "@/lib/battlenet/session";
 import { BATTLE_NET_REGIONS } from "@/lib/battlenet/types";
 import { uploadRecruitmentScreenshot } from "@/lib/recruitment-screenshot";
-import { isWarcraftLogsUrl } from "@/lib/recruitment-validation";
+import {
+  FOREVER_CHARACTER_NAME_HINT,
+  isValidForeverCharacterName,
+  isWarcraftLogsUrl,
+} from "@/lib/recruitment-validation";
 import { buildCharacterProfileLinks } from "@/lib/character-profile-links";
 import { DISCORD_APPLICATION_COOKIE } from "@/lib/discord-oauth-session";
 import { getClassColor } from "@/lib/warcraft";
@@ -115,7 +119,8 @@ const retailApplicationSchema = z.discriminatedUnion("characterSource", [
 
 const foreverFormFields = {
   ...contactFields,
-  characterName: requiredText("Character name", 40),
+  characterName: requiredText("Character name", 25)
+    .refine(isValidForeverCharacterName, FOREVER_CHARACTER_NAME_HINT),
   faction: z.literal(foreverFaction),
   roleInterests: z.array(z.enum(foreverRoles)).min(1, "Choose at least one role that interests you.").max(foreverRoles.length),
   characterPlans: requiredText("Character plans", 1_200),
