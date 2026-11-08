@@ -2,6 +2,7 @@
 
 import { ChevronDown, LoaderCircle, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { ForeverCharacterInfo } from '@/components/recruitment/ForeverCharacterInfo';
 
 import type { VerifiedForeverCharacter } from '@/lib/battlenet/types';
 import { FOREVER_CHARACTER_NAME_HINT, FOREVER_CHARACTER_NAME_PATTERN, isValidForeverCharacterName } from '@/lib/recruitment-validation';
@@ -94,6 +95,7 @@ export function ForeverCharacterPicker({ connected, disabled }: { connected: boo
           <RefreshCw aria-hidden='true' size={12} /> Refresh characters
         </button> : null}
       </div> : null}
+      {selected ? <ForeverCharacterInfo key={`${selected.region}:${selected.id}:${selected.fullName}:${refresh}`} character={selected} /> : null}
     </div>
   );
 }

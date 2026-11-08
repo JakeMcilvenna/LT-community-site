@@ -33,6 +33,14 @@ export type VerifiedForeverCharacter = {
   level: number;
   className?: string;
   faction?: string;
+  rulesetId?: number;
+  rulesetName?: string;
+};
+
+export type VerifiedForeverCharacterDetails = VerifiedForeverCharacter & {
+  specialization?: string;
+  armoryUrl: string;
+  raiderIoProfileUrl?: string;
 };
 
 export type BattleNetRecruitmentSession = {

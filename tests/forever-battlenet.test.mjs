@@ -8,6 +8,7 @@ import { findOwnedForeverCharacter, normalizeForeverAccountCharacters } from '..
 import * as recruitmentData from '../data/recruitment-application.ts';
 import * as recruitmentValidation from '../lib/recruitment-validation.ts';
 import { createBotGhostVariable } from '../lib/botghost-values.ts';
+import { enrichForeverCharacter } from '../lib/battlenet/forever-character-details.ts';
 
 const require = createRequire(import.meta.url);
 const profile = { wow_accounts: [{ characters: [
@@ -55,6 +56,7 @@ async function loadClient(fetch) {
     require: (name) => {
       if (name === 'server-only') return {};
       if (name === './forever-verification') return { findOwnedForeverCharacter, normalizeForeverAccountCharacters };
+      if (name === './forever-character-details') return { enrichForeverCharacter };
       throw new Error(`Unexpected dependency: ${name}`);
     },
   });
@@ -92,6 +94,44 @@ test('Forever lookup distinguishes expired authorization and provider outages', 
       message: status === 401 || status === 403 ? 'BATTLENET_SESSION_EXPIRED' : 'BATTLENET_UNAVAILABLE',
     });
   }
+});
+
+test('Forever details recheck ownership before querying public profile endpoints', async () => {
+  const calls = [];
+  const client = await loadClient(async (url) => { calls.push(new URL(url)); return Response.json(profile); });
+  assert.equal(await client.getForeverCharacterDetails(session, 'Notmine Brightvale'), null);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].pathname, '/profile/user/wow');
+});
+
+test('Forever optional profile failures preserve the selected account character', async () => {
+  const client = await loadClient(async (url) => new URL(url).pathname === '/profile/user/wow'
+    ? Response.json(profile) : new Response('', { status: 404 }));
+  const details = await client.getForeverCharacterDetails(session, 'Asha Brightvale');
+  assert.equal(details.fullName, 'Asha Brightvale');
+  assert.equal(details.className, 'Mage');
+  assert.equal(details.level, 25);
+  assert.equal(details.specialization, undefined);
+  assert.match(details.armoryUrl, /\/forever\/eu\/armory\/character\/asha-brightvale$/);
+  assert.equal(details.raiderIoProfileUrl, undefined);
+});
+
+test('Forever profile and talent queries use realmless paths in parallel', async () => {
+  const profileCalls = [];
+  const client = await loadClient(async (url) => {
+    const parsed = new URL(url);
+    if (parsed.pathname === '/profile/user/wow') return Response.json(profile);
+    profileCalls.push(parsed);
+    return Response.json(parsed.pathname.endsWith('/specializations')
+      ? { character: { id: 42, name: 'Asha', surname: 'Brightvale' }, specialization_groups: [{ is_active: true, specializations: [{ specialization_name: 'Frost', spent_points: 16 }] }] }
+      : { id: 42, name: 'Asha', surname: 'Brightvale', level: 26, character_class: { name: 'Mage' }, ruleset: { id: 1, name: 'PvP' } });
+  });
+  const details = await client.getForeverCharacterDetails(session, 'Asha Brightvale');
+  assert.equal(profileCalls.length, 2);
+  assert(profileCalls.every((url) => url.pathname.startsWith('/profile/wow/character/asha-brightvale') && url.searchParams.get('namespace') === 'profile-forever-eu'));
+  assert.equal(details.level, 26);
+  assert.equal(details.specialization, 'Frost');
+  assert.equal(details.raiderIoProfileUrl, 'https://forever.raider.io/characters/eu/pvp/Asha%20Brightvale');
 });
 
 async function submissionHarness(ownedCharacter) {
