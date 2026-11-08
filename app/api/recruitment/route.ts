@@ -17,8 +17,8 @@ import { verifyApplicationToken, type ApplicationTokenPayload } from "@/lib/appl
 import { sendBotGhostApplication } from "@/lib/botghost";
 import { createBotGhostVariable, type BotGhostWebhookVariable } from "@/lib/botghost-values";
 import { resolveVerifiedCharacter } from "@/lib/battlenet/client";
-import {
 import { resolveOwnedForeverCharacter } from "@/lib/battlenet/forever-client";
+import {
   BATTLE_NET_SESSION_COOKIE,
   readRecruitmentSession,
 } from "@/lib/battlenet/session";
@@ -120,10 +120,10 @@ const retailApplicationSchema = z.discriminatedUnion("characterSource", [
 
 const foreverFormFields = {
   ...contactFields,
-  characterName: requiredText("Character name", 25)
   characterSource: z.enum(["battlenet", "manual"]),
   characterVerified: z.boolean(),
   characterId: requiredText("Character ID", 100).optional(),
+  characterName: requiredText("Character name", 25)
     .refine(isValidForeverCharacterName, FOREVER_CHARACTER_NAME_HINT),
   faction: z.literal(foreverFaction),
   roleInterests: z.array(z.enum(foreverRoles)).min(1, "Choose at least one role that interests you.").max(foreverRoles.length),
@@ -315,8 +315,8 @@ const buildRetailEmbed = (application: RetailApplication, screenshotFilename?: s
 const buildFullForeverApplication = (application: ForeverApplication) => {
   const rows: Array<[string, string]> = [
     ["Character", application.characterName],
-    ["BattleTag", application.battleTag],
     ["Character ownership", application.characterVerified ? "Battle.net verified" : "Not verified (manual entry)"],
+    ["BattleTag", application.battleTag],
     ["BattleTag source", application.battleTagSource === "battlenet" ? "Battle.net verified" : "Manual"],
     ["Battle.net region", application.battleTagSource === "battlenet" ? application.battleNetRegion.toUpperCase() : "Not provided"],
     ["Discord", application.discordUsername],
@@ -456,8 +456,8 @@ const buildForeverApplicationSummary = (
   "",
   `**Applicant:** <@${discordIdentity.discordUserId}>`,
   `**Character:** ${safeSummaryText(application.characterName, 40)}`,
-  `**Discord:** ${safeSummaryText(discordIdentity.discordTag, 100)}`,
   `**Character ownership:** ${application.characterVerified ? "Battle.net verified" : "Not verified (manual entry)"}`,
+  `**Discord:** ${safeSummaryText(discordIdentity.discordTag, 100)}`,
   `**BattleTag:** ${safeSummaryText(application.battleTag, 80)}`,
   `**Country / timezone:** ${safeSummaryText(application.country, 80)}`,
   `**Age:** ${application.age}`,
@@ -579,10 +579,10 @@ const buildBotGhostVariables = (
     ...coreVariables,
     ...sharedVariables,
     createBotGhostVariable("character", application.characterName),
-    createBotGhostVariable("battle_net_verified", application.battleNetVerified),
     createBotGhostVariable("character_source", application.characterSource === "battlenet" ? "Battle.net" : "Manual"),
     createBotGhostVariable("character_verified", application.characterVerified),
     createBotGhostVariable("character_id", application.characterId),
+    createBotGhostVariable("battle_net_verified", application.battleNetVerified),
     createBotGhostVariable("battle_net_region", application.battleTagSource === "battlenet" ? application.battleNetRegion : undefined),
     createBotGhostVariable("role_interests", application.roleInterests),
     createBotGhostVariable("character_plans", application.characterPlans),
@@ -631,8 +631,8 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const submittedApplicationType = formData.get("applicationType");
     const submittedCharacterSource = formData.get("characterSource");
-    const submittedBattleTagSource = formData.get("battleTagSource");
     const foreverCharacterSource = submittedCharacterSource ?? "manual";
+    const submittedBattleTagSource = formData.get("battleTagSource");
     const submittedApplicationToken = formData.get("applicationToken");
     const applicationTokenValue =
       submittedApplicationToken ??
@@ -753,7 +753,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const parsed = applicationSchema.safeParse({
     let verifiedForever: VerifiedForeverCharacter | undefined;
     if (submittedApplicationType === "forever" && foreverCharacterSource === "battlenet") {
       if (!foreverBattleNetSession) {
@@ -778,6 +777,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const parsed = applicationSchema.safeParse({
       applicationType: submittedApplicationType,
       characterSource: submittedApplicationType === "retail" ? submittedCharacterSource : foreverCharacterSource,
       characterVerified: submittedApplicationType === "forever" ? Boolean(verifiedForever) : undefined,
