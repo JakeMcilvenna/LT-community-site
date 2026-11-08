@@ -989,6 +989,17 @@ function ForeverApplicationForm({
 						{applicationToken && discordIdentity ? (
 							<VerifiedDiscordAccount identity={discordIdentity} variant='forever' />
 						) : null}
+						<Field label='Character name' name='foreverCharacterName' required>
+							<input
+								id='foreverCharacterName'
+								name='characterName'
+								required
+								maxLength={40}
+								placeholder='Examplemage'
+								className={foreverInputClass}
+								disabled={submitting}
+							/>
+						</Field>
 						<Field
 							label='Email address'
 							name='foreverEmail'

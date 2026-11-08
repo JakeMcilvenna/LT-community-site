@@ -115,6 +115,7 @@ const retailApplicationSchema = z.discriminatedUnion("characterSource", [
 
 const foreverFormFields = {
   ...contactFields,
+  characterName: requiredText("Character name", 40),
   faction: z.literal(foreverFaction),
   roleInterests: z.array(z.enum(foreverRoles)).min(1, "Choose at least one role that interests you.").max(foreverRoles.length),
   characterPlans: requiredText("Character plans", 1_200),
@@ -304,6 +305,7 @@ const buildRetailEmbed = (application: RetailApplication, screenshotFilename?: s
 
 const buildFullForeverApplication = (application: ForeverApplication) => {
   const rows: Array<[string, string]> = [
+    ["Character", application.characterName],
     ["BattleTag", application.battleTag],
     ["BattleTag source", application.battleTagSource === "battlenet" ? "Battle.net verified" : "Manual"],
     ["Battle.net region", application.battleTagSource === "battlenet" ? application.battleNetRegion.toUpperCase() : "Not provided"],
@@ -334,7 +336,7 @@ const buildForeverEmbed = (application: ForeverApplication) => {
   const fields = [
     {
       name: "👤 Applicant",
-      value: `\`\`\`text\nBattleTag  ${codeBlockText(application.battleTag)}\nDiscord    ${codeBlockText(application.discordUsername)}\nEmail      ${codeBlockText(application.email || "Not provided")}\n\`\`\``,
+      value: `\`\`\`text\nCharacter  ${codeBlockText(application.characterName)}\nBattleTag  ${codeBlockText(application.battleTag)}\nDiscord    ${codeBlockText(application.discordUsername)}\nEmail      ${codeBlockText(application.email || "Not provided")}\n\`\`\``,
       inline: false,
     },
     { name: "🧭 Direction", value: `**Faction:** ${application.faction}\n**Roles:** ${application.roleInterests.join(", ")}\n**Background:** ${application.experienceLevel}`, inline: false },
@@ -443,6 +445,7 @@ const buildForeverApplicationSummary = (
   "## Warcraft Forever Application",
   "",
   `**Applicant:** <@${discordIdentity.discordUserId}>`,
+  `**Character:** ${safeSummaryText(application.characterName, 40)}`,
   `**Discord:** ${safeSummaryText(discordIdentity.discordTag, 100)}`,
   `**BattleTag:** ${safeSummaryText(application.battleTag, 80)}`,
   `**Country / timezone:** ${safeSummaryText(application.country, 80)}`,
@@ -564,6 +567,7 @@ const buildBotGhostVariables = (
   return [
     ...coreVariables,
     ...sharedVariables,
+    createBotGhostVariable("character", application.characterName),
     createBotGhostVariable("battle_net_verified", application.battleNetVerified),
     createBotGhostVariable("battle_net_region", application.battleTagSource === "battlenet" ? application.battleNetRegion : undefined),
     createBotGhostVariable("role_interests", application.roleInterests),
