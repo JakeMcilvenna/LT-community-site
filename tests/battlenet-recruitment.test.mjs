@@ -188,7 +188,7 @@ test('verified character selection is restored across page navigation and remain
   assert.doesNotMatch(source, /> Change character/);
 });
 
-test('Forever offers Battle.net and manual BattleTag entry without exposing character selection', async () => {
+test('Forever offers its own character selector alongside manual BattleTag entry', async () => {
   const formSource = await readFile(new URL('../components/recruitment/RecruitmentApplicationForm.tsx', import.meta.url), 'utf8');
   const controlSource = await readFile(new URL('../components/recruitment/BattleNetIdentityControl.tsx', import.meta.url), 'utf8');
   const hookSource = await readFile(new URL('../components/recruitment/useBattleNetIdentity.ts', import.meta.url), 'utf8');
@@ -205,9 +205,11 @@ test('Forever offers Battle.net and manual BattleTag entry without exposing char
 	assert.match(controlSource, /Secure Battle\.net sign-in/);
 	assert.match(controlSource, /We never see your password/);
 	assert.match(controlSource, /Limited account access/);
-  assert.match(controlSource, /WoW Forever character selection is not currently available through/);
+  assert.match(controlSource, /Forever characters generally appear from level 10 after logging out/);
+  assert.match(controlSource, /Allow 20–40 minutes for updates/);
   assert.match(foreverForm, /sourceName='battleTagSource'/);
   assert.doesNotMatch(foreverForm, /BattleNetCharacterPicker/);
+  assert.match(foreverForm, /ForeverCharacterPicker/);
   assert.doesNotMatch(identitySource, /getOwnedCharacters|characters/);
   assert.match(identitySource, /battleTag: session\.battleTag/);
 });

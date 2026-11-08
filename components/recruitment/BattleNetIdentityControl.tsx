@@ -59,7 +59,7 @@ export function BattleNetIdentityControl({
 			<div className='grid gap-2.5 sm:grid-cols-2'>
 				<label className={battleNetChoiceClass}>
 					<input type='radio' name={sourceName} value='battlenet' checked={source === 'battlenet'} onChange={() => onSourceChange('battlenet')} disabled={disabled} className='size-4 accent-[#148eff]' />
-					<span><strong className='block text-[var(--foreground)]'>Connect Battle.net</strong><span className='mt-0.5 block text-xs opacity-70'>Verify and fill your BattleTag{isForever ? '.' : ' and character.'}</span></span>
+					<span><strong className='block text-[var(--foreground)]'>Connect Battle.net</strong><span className='mt-0.5 block text-xs opacity-70'>Verify and fill your BattleTag and character.</span></span>
 				</label>
 				<label className={manualChoiceClass}>
 					<input type='radio' name={sourceName} value='manual' checked={source === 'manual'} onChange={() => onSourceChange('manual')} disabled={disabled} className={`size-4 ${isForever ? 'accent-[#8ee0d6]' : 'accent-[var(--accent-strong)]'}`} />
@@ -68,8 +68,9 @@ export function BattleNetIdentityControl({
 			</div>
 			{isForever ? (
 				<p className='mt-3 text-xs leading-5 text-[#8fa3ad]'>
-					WoW Forever character selection is not currently available through
-					Battle.net. Connecting your account will verify your BattleTag only.
+					Forever characters generally appear from level 10 after logging out.
+					Allow 20–40 minutes for updates and choose the correct account region.
+					If your character is missing, refresh the list or enter it manually.
 				</p>
 			) : null}
 
@@ -104,7 +105,7 @@ export function BattleNetIdentityControl({
 						</div>
 						<div className='flex items-start gap-2.5'>
 							<KeyRound className='mt-0.5 shrink-0 text-[#72bdff]' size={16} strokeWidth={1.8} aria-hidden='true' />
-							<p className='text-xs leading-5 text-[#aeb8c0]'><strong className='block text-[#dbeeff]'>Limited account access</strong>Used only to verify your BattleTag{isForever ? '.' : ' and chosen character.'}</p>
+							<p className='text-xs leading-5 text-[#aeb8c0]'><strong className='block text-[#dbeeff]'>Limited account access</strong>Used only to verify your BattleTag and chosen character.</p>
 						</div>
 					</div>
 					{identity.error || disconnectError ? <p className='mt-3 text-sm text-[#efa39d]' role='alert'>{disconnectError || identity.error}</p> : null}

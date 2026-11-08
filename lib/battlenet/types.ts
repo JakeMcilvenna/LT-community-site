@@ -24,6 +24,17 @@ export type VerifiedCharacterDetails = VerifiedWowCharacter & {
   thumbnailUrl?: string;
 };
 
+export type VerifiedForeverCharacter = {
+  id: string;
+  name: string;
+  surname: string;
+  fullName: string;
+  region: BattleNetRegion;
+  level: number;
+  className?: string;
+  faction?: string;
+};
+
 export type BattleNetRecruitmentSession = {
   version: 1;
   accessToken: string;

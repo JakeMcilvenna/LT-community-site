@@ -18,10 +18,11 @@ import { sendBotGhostApplication } from "@/lib/botghost";
 import { createBotGhostVariable, type BotGhostWebhookVariable } from "@/lib/botghost-values";
 import { resolveVerifiedCharacter } from "@/lib/battlenet/client";
 import {
+import { resolveOwnedForeverCharacter } from "@/lib/battlenet/forever-client";
   BATTLE_NET_SESSION_COOKIE,
   readRecruitmentSession,
 } from "@/lib/battlenet/session";
-import { BATTLE_NET_REGIONS } from "@/lib/battlenet/types";
+import { BATTLE_NET_REGIONS, type VerifiedForeverCharacter } from "@/lib/battlenet/types";
 import { uploadRecruitmentScreenshot } from "@/lib/recruitment-screenshot";
 import {
   FOREVER_CHARACTER_NAME_HINT,
@@ -120,6 +121,9 @@ const retailApplicationSchema = z.discriminatedUnion("characterSource", [
 const foreverFormFields = {
   ...contactFields,
   characterName: requiredText("Character name", 25)
+  characterSource: z.enum(["battlenet", "manual"]),
+  characterVerified: z.boolean(),
+  characterId: requiredText("Character ID", 100).optional(),
     .refine(isValidForeverCharacterName, FOREVER_CHARACTER_NAME_HINT),
   faction: z.literal(foreverFaction),
   roleInterests: z.array(z.enum(foreverRoles)).min(1, "Choose at least one role that interests you.").max(foreverRoles.length),
@@ -312,6 +316,7 @@ const buildFullForeverApplication = (application: ForeverApplication) => {
   const rows: Array<[string, string]> = [
     ["Character", application.characterName],
     ["BattleTag", application.battleTag],
+    ["Character ownership", application.characterVerified ? "Battle.net verified" : "Not verified (manual entry)"],
     ["BattleTag source", application.battleTagSource === "battlenet" ? "Battle.net verified" : "Manual"],
     ["Battle.net region", application.battleTagSource === "battlenet" ? application.battleNetRegion.toUpperCase() : "Not provided"],
     ["Discord", application.discordUsername],
@@ -452,6 +457,7 @@ const buildForeverApplicationSummary = (
   `**Applicant:** <@${discordIdentity.discordUserId}>`,
   `**Character:** ${safeSummaryText(application.characterName, 40)}`,
   `**Discord:** ${safeSummaryText(discordIdentity.discordTag, 100)}`,
+  `**Character ownership:** ${application.characterVerified ? "Battle.net verified" : "Not verified (manual entry)"}`,
   `**BattleTag:** ${safeSummaryText(application.battleTag, 80)}`,
   `**Country / timezone:** ${safeSummaryText(application.country, 80)}`,
   `**Age:** ${application.age}`,
@@ -574,6 +580,9 @@ const buildBotGhostVariables = (
     ...sharedVariables,
     createBotGhostVariable("character", application.characterName),
     createBotGhostVariable("battle_net_verified", application.battleNetVerified),
+    createBotGhostVariable("character_source", application.characterSource === "battlenet" ? "Battle.net" : "Manual"),
+    createBotGhostVariable("character_verified", application.characterVerified),
+    createBotGhostVariable("character_id", application.characterId),
     createBotGhostVariable("battle_net_region", application.battleTagSource === "battlenet" ? application.battleNetRegion : undefined),
     createBotGhostVariable("role_interests", application.roleInterests),
     createBotGhostVariable("character_plans", application.characterPlans),
@@ -623,6 +632,7 @@ export async function POST(request: NextRequest) {
     const submittedApplicationType = formData.get("applicationType");
     const submittedCharacterSource = formData.get("characterSource");
     const submittedBattleTagSource = formData.get("battleTagSource");
+    const foreverCharacterSource = submittedCharacterSource ?? "manual";
     const submittedApplicationToken = formData.get("applicationToken");
     const applicationTokenValue =
       submittedApplicationToken ??
@@ -744,8 +754,33 @@ export async function POST(request: NextRequest) {
     }
 
     const parsed = applicationSchema.safeParse({
+    let verifiedForever: VerifiedForeverCharacter | undefined;
+    if (submittedApplicationType === "forever" && foreverCharacterSource === "battlenet") {
+      if (!foreverBattleNetSession) {
+        return NextResponse.json({ error: "Connect Battle.net or enter your character manually." }, { status: 401 });
+      }
+      const characterName = formData.get("characterName");
+      if (typeof characterName !== "string" || !characterName.trim()) {
+        return NextResponse.json({ error: "Choose your Forever character." }, { status: 400 });
+      }
+      try {
+        const character = await resolveOwnedForeverCharacter(foreverBattleNetSession, characterName);
+        if (!character) {
+          return NextResponse.json({ error: "That Forever character is no longer available on this Battle.net account. Refresh the list or enter it manually." }, { status: 409 });
+        }
+        verifiedForever = character;
+      } catch (error) {
+        const expired = error instanceof Error && error.message === "BATTLENET_SESSION_EXPIRED";
+        return NextResponse.json({ error: expired
+          ? "Your Battle.net connection expired. Reconnect and choose your Forever character again."
+          : "Battle.net could not verify your Forever character. Try again or enter it manually.",
+        }, { status: expired ? 401 : 502 });
+      }
+    }
+
       applicationType: submittedApplicationType,
-      characterSource: submittedApplicationType === "retail" ? submittedCharacterSource : undefined,
+      characterSource: submittedApplicationType === "retail" ? submittedCharacterSource : foreverCharacterSource,
+      characterVerified: submittedApplicationType === "forever" ? Boolean(verifiedForever) : undefined,
       battleTagSource: submittedApplicationType === "forever" ? submittedBattleTagSource : undefined,
       battleTag: verifiedRetail?.battleTag ?? foreverBattleNetSession?.battleTag ?? formData.get("battleTag"),
       battleNetVerified: submittedApplicationType === "forever" ? Boolean(foreverBattleNetSession) : submittedCharacterSource === "battlenet" ? Boolean(verifiedRetail) : false,
@@ -754,8 +789,8 @@ export async function POST(request: NextRequest) {
       email: formData.get("email"),
       country: formData.get("country"),
       age: formData.get("age"),
-      characterName: verifiedRetail?.characterName ?? formData.get("characterName"),
-      characterId: verifiedRetail?.characterId,
+      characterName: verifiedRetail?.characterName ?? verifiedForever?.fullName ?? formData.get("characterName"),
+      characterId: verifiedRetail?.characterId ?? verifiedForever?.id,
       realm: verifiedRetail?.realm ?? formData.get("realm"),
       realmSlug: verifiedRetail?.realmSlug,
       region: verifiedRetail?.region,
